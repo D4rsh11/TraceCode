@@ -1,4 +1,5 @@
-# Codebase Q&A Assistant (RAG)
+# TraceCode
+<img width="1983" height="793" alt="tracecode" src="https://github.com/user-attachments/assets/47d47c3c-2cbd-4bbd-a0ff-945b9c4e9da5" />
  
 An AI assistant that answers natural-language questions about a code repository — grounded strictly in the actual code, with exact file and line citations for every claim.
  
