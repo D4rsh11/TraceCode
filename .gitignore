@@ -1,5 +1,27 @@
+
+# Python virtual environment
 venv/
-.env
+.venv/
+
+# Python cache
 __pycache__/
+*.py[cod]
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Local RAG data
 chroma_db/
 target_repo/
+
+# Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/coverage/
+
+# Build artifacts
+dist/
+build/
