@@ -1,30 +1,30 @@
 [
   {
-    "file": "textToHandwritten-main/help.py",
+    "file": "help.py",
     "name": "(module level)",
     "type": "module",
     "start_line": 1,
-    "end_line": 0,
+    "end_line": 12,
     "code": "from maincode import getname, arr\nimport os\nmissing = []\nfor ch in arr:\n    name = getname(ch)\n    if not os.path.exists(f\"myfont/{name}.png\"):\n        missing.append(f\"{name}.png\")\nprint(\"Missing character images:\")\nfor file in missing:\n    print(file)"
   },
   {
-    "file": "textToHandwritten-main/countwordlen.py",
+    "file": "countwordlen.py",
     "name": "(module level)",
     "type": "module",
     "start_line": 1,
-    "end_line": 0,
+    "end_line": 10,
     "code": "from PIL import Image\nimport os\nimgwidth={}\nfor img in os.listdir('./myfont/'):\n\tif img.endswith('.png'):\n\t\tchar,ext=os.path.splitext(img)\n\t\t# print(char)\n\t\tpic=Image.open(\"./myfont/\"+img)\n\t\timgwidth[char]=pic.width;"
   },
   {
-    "file": "textToHandwritten-main/maincode.py",
+    "file": "maincode.py",
     "name": "(module level)",
     "type": "module",
     "start_line": 1,
-    "end_line": 0,
+    "end_line": 205,
     "code": "from PIL import Image\nfrom countwordlen import imgwidth\nimport random\nimport string\nimport os\nwidth, height = 715, 760\narr = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+,.-?:/*<>}{()=[]$\" '\nimgsource = \"myfont/\"\npageheight = 7624\npagewidth = 5940\nstart = 715\nend = 5930\npageno = 0\nif __name__ == \"__main__\":\n    extract()"
   },
   {
-    "file": "textToHandwritten-main/maincode.py",
+    "file": "maincode.py",
     "name": "getpage",
     "type": "function",
     "start_line": 17,
@@ -32,7 +32,7 @@
     "code": "def getpage():\n    global back, pageno\n    try:\n        pageno += 1\n        bg = Image.open(\"myfont/backpage.png\", 'r')\n        back = Image.new('RGBA', (5952, 8088), (0, 0, 0, 0))\n        back.paste(bg, (0, 0))\n    except:\n        print(\"backpage not found\")\n        exit()"
   },
   {
-    "file": "textToHandwritten-main/maincode.py",
+    "file": "maincode.py",
     "name": "savepage",
     "type": "function",
     "start_line": 28,
@@ -40,7 +40,7 @@
     "code": "def savepage():\n    path = \"final\\\\done\"\n    i = 1\n    while os.path.exists(path + str(i) + \".png\"):\n        i += 1\n    back.save(path + str(i) + \".png\", \"PNG\")\n    print(\"Saved done\" + str(i) + \".png .......n\")"
   },
   {
-    "file": "textToHandwritten-main/maincode.py",
+    "file": "maincode.py",
     "name": "pasteimg",
     "type": "function",
     "start_line": 36,
@@ -48,7 +48,7 @@
     "code": "def pasteimg(case, start, height):\n    global back\n    try:\n        cases = Image.open(imgsource + \"%s.png\" % case)\n        back.paste(cases, (start, height), mask=cases)\n        start = start + cases.width + random.randint(5, 15)\n    except FileNotFoundError:\n        # Silently skip missing image\n        pass\n    except Exception as e:\n        print(f\"Unexpected error with case '{case}': {e}\")\n    return start"
   },
   {
-    "file": "textToHandwritten-main/maincode.py",
+    "file": "maincode.py",
     "name": "getname",
     "type": "function",
     "start_line": 49,
@@ -56,7 +56,7 @@
     "code": "def getname(letter):\n    symbol_map = {\n        \",\": \"coma\",\n        \".\": \"fs\",\n        \"?\": \"que\",\n        \"<\": \"ang1\",\n        \">\": \"ang2\",\n        \"{\": \"cur1\",\n        \"}\": \"cur2\",\n        \":\": \"colon\",\n        \"/\": \"div\",\n        \"-\": \"sub\",\n        \"(\": \"par1\",\n        \")\": \"par2\",\n        \"[\": \"sqr1\",\n        \"]\": \"sqr2\",\n        \"*\": \"star\",\n        \"=\": \"equal\",\n        \"+\": \"plus\",\n        \"$\": lambda: \"dol\" + str(random.randint(1, 2)),\n        '\"': \"quo\"\n    }\n\n    if letter.isupper():\n        return \"c\" + letter.lower()\n    elif letter in symbol_map:\n        mapped = symbol_map[letter]\n        return mapped() if callable(mapped) else mapped\n    return letter"
   },
   {
-    "file": "textToHandwritten-main/maincode.py",
+    "file": "maincode.py",
     "name": "getwordpix",
     "type": "function",
     "start_line": 79,
@@ -64,7 +64,7 @@
     "code": "def getwordpix(word):\n    wordwid = 0\n    for char in word:\n        if char in arr:\n            img = getname(char)\n            try:\n                wordwid += imgwidth[img]\n            except KeyError:\n                continue\n            except Exception as e:\n                print(f\"Unexpected error with character '{img}': {e}\")\n    return wordwid"
   },
   {
-    "file": "textToHandwritten-main/maincode.py",
+    "file": "maincode.py",
     "name": "getnewline",
     "type": "function",
     "start_line": 92,
@@ -72,7 +72,7 @@
     "code": "def getnewline(start, cur, end, height):\n    global back\n    height = height + 244\n    if height > pageheight:\n        getnewpage()\n        return start, 760\n    else:\n        start = 720 + (random.randint(0, 100))\n    return start, height"
   },
   {
-    "file": "textToHandwritten-main/maincode.py",
+    "file": "maincode.py",
     "name": "getnewpage",
     "type": "function",
     "start_line": 102,
@@ -80,7 +80,7 @@
     "code": "def getnewpage():\n    savepage()\n    getpage()"
   },
   {
-    "file": "textToHandwritten-main/maincode.py",
+    "file": "maincode.py",
     "name": "formatting",
     "type": "function",
     "start_line": 106,
@@ -88,7 +88,7 @@
     "code": "def formatting(word, leng, start, cur, ecfnd):\n    global height\n    if leng >= 2:\n        if word[:2] == \"^^\":\n            word = word[2:]\n            cur += (2418 - int(getwordpix(word) / 2))\n        if word[:2] == \"->\":\n            word = word[2:]\n            cur += 400\n    return word, cur"
   },
   {
-    "file": "textToHandwritten-main/maincode.py",
+    "file": "maincode.py",
     "name": "checktag",
     "type": "function",
     "start_line": 117,
@@ -96,7 +96,7 @@
     "code": "def checktag(content, i, height, start, cur, end):\n    if content[i] == \"<table>\":\n        try:\n            print(\"Making table....\")\n            index = content.index(\"</table>\", i + 1)\n            content = content[i + 1:index]\n            cols = int(content[0])\n            total = 0\n            ratio = [0]\n            for j in range(1, cols + 1):\n                total += int(content[j])\n                ratio.append(int(content[j]))\n            base = (end - start) / total\n            content = content[cols + 1:index]\n            content = \" \".join(content)\n            row = content.split(\"#\")\n            maxheight = 0\n            i = 0\n            lastheight = height\n            for R in row:\n                for C in R.split(\"|\"):\n                    C = C.split()\n                    start, cur, end, height1 = condition(\n                        lastheight, start + base * ratio[i], start + base * ratio[i], start + base * ratio[i + 1], C)\n                    if height1 > maxheight:\n                        maxheight = height1\n                lastheight = maxheight\n                i += 1\n            return index + 1\n        except Exception as e:\n            print(e)\n            print(\"     </table> not found\")\n            exit()\n    return 0"
   },
   {
-    "file": "textToHandwritten-main/maincode.py",
+    "file": "maincode.py",
     "name": "condition",
     "type": "function",
     "start_line": 152,
@@ -104,7 +104,7 @@
     "code": "def condition(height, start, cur, end, content):\n    global arr, back\n    first = 1\n    for i in range(0, len(content)):\n        word = content[i]\n        ind = checktag(content, i, height, start, cur, end)\n        if ind:\n            i = ind\n            continue\n        halfword = 0\n        leng = len(word)\n        word, cur = formatting(word, leng, start, cur, end)\n        wordwid = getwordpix(word)\n        widthafterpaste = cur + wordwid + 70\n        cur += 60 + random.randint(0, 35)\n        if widthafterpaste > end:\n            diff = widthafterpaste - end\n            if leng > 5 and diff > ((0.4 * leng) + 250):\n                halfword = 1\n            else:\n                cur, height = getnewline(start, cur, end, height)\n        if height > 3500 and first:\n            height += 10\n            first = 0\n        for letter in word:\n            if letter == \"#\":\n                cur, height = getnewline(start, cur, end, height)\n                continue\n            if letter in arr:\n                letter = getname(letter)\n                if halfword and cur + random.randint(200, 280) >= end:\n                    cur, height = getnewline(start, cur, end, height)\n                cur = pasteimg(letter, cur, height)\n    return start, cur, end, height"
   },
   {
-    "file": "textToHandwritten-main/maincode.py",
+    "file": "maincode.py",
     "name": "readfile",
     "type": "function",
     "start_line": 187,
@@ -112,7 +112,7 @@
     "code": "def readfile():\n    pass"
   },
   {
-    "file": "textToHandwritten-main/maincode.py",
+    "file": "maincode.py",
     "name": "extract",
     "type": "function",
     "start_line": 190,

@@ -2,26 +2,58 @@
 generate.py
 
 Takes a question, retrieves relevant code chunks (via retrieve.py), and
-asks Gemini to answer using ONLY that retrieved context, citing exact
+asks OpenRouter to answer using ONLY that retrieved context, citing exact
 file/line locations for every claim.
 """
 
 import os
 import time
+
 from dotenv import load_dotenv
-from google import genai
-from google.genai.errors import ServerError, ClientError
+from openai import (
+    APIConnectionError,
+    APITimeoutError,
+    InternalServerError,
+    OpenAI,
+    RateLimitError,
+)
 
 from retrieve import retrieve
 
 load_dotenv()
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-MODEL_NAME = "gemini-flash-lite-latest"
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+MODEL_NAME = os.getenv("OPENROUTER_MODEL", "openai/gpt-4o-mini")
+print(f"TraceCode model configured: {MODEL_NAME}")
+
+MAX_RETRIES = 3
+INITIAL_RETRY_DELAY = 2
+
+
+def get_client() -> OpenAI:
+    """Create an OpenRouter client using the API key from the root .env."""
+
+    api_key = os.getenv("OPENROUTER_API_KEY")
+
+    if not api_key:
+        raise RuntimeError(
+            "OPENROUTER_API_KEY is missing. "
+            "Add it to your project's root .env file."
+        )
+
+    return OpenAI(
+        base_url=OPENROUTER_BASE_URL,
+        api_key=api_key,
+        max_retries=0,
+        timeout=60.0,
+    )
 
 
 def build_prompt(question: str, hits: list) -> str:
+    """Build a prompt containing only the retrieved code context."""
+
     context_blocks = []
+
     for h in hits:
         m = h["metadata"]
         location = f"{m['file']} (lines {m['start_line']}-{m['end_line']})"
@@ -50,31 +82,66 @@ Answer:"""
     return prompt
 
 
-def answer_question(question: str, top_k: int = 5) -> dict:
+def answer_question(question: str, top_k: int = 10) -> dict:
+    """Retrieve relevant chunks and generate an answer using OpenRouter."""
+
     hits = retrieve(question, top_k=top_k)
     prompt = build_prompt(question, hits)
+    client = get_client()
 
-    max_retries = 3
-    for attempt in range(max_retries):
+    response = None
+
+    for attempt in range(MAX_RETRIES):
         try:
-            response = client.models.generate_content(
+            response = client.chat.completions.create(
                 model=MODEL_NAME,
-                contents=prompt,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    }
+                ],
+                temperature=0.2,
             )
+            print(f"TraceCode model returned: {response.model}")
             break
-        except ClientError as e:
-            if "RESOURCE_EXHAUSTED" in str(e) and attempt < max_retries - 1:
-                time.sleep(45)  # free tier quota resets ~every 60s
-            else:
+
+        except RateLimitError:
+            if attempt == MAX_RETRIES - 1:
                 raise
-        except ServerError as e:
-            if attempt == max_retries - 1:
-                raise
-            wait = 2 ** attempt  # 1s, 2s, 4s
+
+            wait = INITIAL_RETRY_DELAY * (2 ** attempt)
+            print(
+                f"OpenRouter rate limit reached. "
+                f"Retrying in {wait} seconds..."
+            )
             time.sleep(wait)
 
+        except (
+            InternalServerError,
+            APIConnectionError,
+            APITimeoutError,
+        ):
+            if attempt == MAX_RETRIES - 1:
+                raise
+
+            wait = INITIAL_RETRY_DELAY * (2 ** attempt)
+            print(
+                f"OpenRouter request failed temporarily. "
+                f"Retrying in {wait} seconds..."
+            )
+            time.sleep(wait)
+
+    if response is None:
+        raise RuntimeError("OpenRouter did not return a response.")
+
+    answer = response.choices[0].message.content
+
+    if not answer:
+        answer = "The model returned an empty response."
+
     return {
-        "answer": response.text,
+        "answer": answer,
         "sources": [
             {
                 "file": h["metadata"]["file"],
@@ -96,5 +163,9 @@ if __name__ == "__main__":
     print(result["answer"])
 
     print("\n--- SOURCES USED ---")
-    for s in result["sources"]:
-        print(f"- {s['file']}:{s['start_line']}-{s['end_line']}  ({s['type']} {s['name']})")
+    for source in result["sources"]:
+        print(
+            f"- {source['file']}:{source['start_line']}-"
+            f"{source['end_line']} "
+            f"({source['type']} {source['name']})"
+        )
