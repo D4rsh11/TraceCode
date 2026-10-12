@@ -717,21 +717,16 @@ export default function Home() {
 
           <div className="flex h-9 w-12 shrink-0 items-center justify-center">
 
+
             <Image
-
-              src="/tracecode-logo.png"
-
+              src="/tracecode-logo-transparent.png"
               alt="TraceCode logo"
-
               width={48}
-
               height={31}
-
               priority
-
               className="h-auto w-12 object-contain"
-
             />
+
 
           </div>
 
